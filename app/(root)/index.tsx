@@ -6,7 +6,7 @@ const HomeScreen = () => {
   return (
     <SafeAreaView className="bg-amber-500 flex-1">
       <View className="bg-sky-500 flex-1">
-        <Text>HomeScreen</Text>
+        <Text>Root screen</Text>
       </View>
     </SafeAreaView>
   );

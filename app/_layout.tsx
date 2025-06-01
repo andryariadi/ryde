@@ -16,15 +16,18 @@ export default function RootLayout() {
     "Jakarta-SemiBold": require("../assets/fonts/PlusJakartaSans-SemiBold.ttf"),
   });
 
+  const isAuth = false;
+
   if (!loaded) {
     // Async font loading only occurs in development.
     return null;
   }
 
   return (
-    <View className="flex-1">
+    <View className="bg-rose-500 flex-1">
       <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="index" />
+        {isAuth ? <Stack.Screen name="(root)" /> : <Stack.Screen name="(auth)" />}
+
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar style="auto" />
