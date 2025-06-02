@@ -1,11 +1,19 @@
+import { router } from "expo-router";
 import React from "react";
-import { Text, View } from "react-native";
+import { Text, TouchableOpacity } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const RegisterScreen = () => {
   return (
-    <View>
-      <Text>RegisterScreen</Text>
-    </View>
+    <SafeAreaView>
+      <TouchableOpacity
+        onPress={() => {
+          router.replace("/(auth)/welcome");
+        }}
+      >
+        <Text>Skip</Text>
+      </TouchableOpacity>
+    </SafeAreaView>
   );
 };
 
