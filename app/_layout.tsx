@@ -1,9 +1,24 @@
 import "@/global.css";
+import { ClerkProvider, useAuth } from "@clerk/clerk-expo";
+import { tokenCache } from "@clerk/clerk-expo/token-cache";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { View } from "react-native";
 import "react-native-reanimated";
+
+function AuthLayout() {
+  const { isSignedIn } = useAuth();
+
+  console.log({ isSignedIn }, "<---authLayout");
+
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      {isSignedIn ? <Stack.Screen name="(root)" /> : <Stack.Screen name="(auth)" />}
+      <Stack.Screen name="+not-found" />
+    </Stack>
+  );
+}
 
 export default function RootLayout() {
   const [loaded] = useFonts({
@@ -16,8 +31,6 @@ export default function RootLayout() {
     "Jakarta-SemiBold": require("../assets/fonts/PlusJakartaSans-SemiBold.ttf"),
   });
 
-  const isAuth = false;
-
   if (!loaded) {
     // Async font loading only occurs in development.
     return null;
@@ -25,12 +38,10 @@ export default function RootLayout() {
 
   return (
     <View className="bg-rose-500 flex-1">
-      <Stack screenOptions={{ headerShown: false }}>
-        {isAuth ? <Stack.Screen name="(root)" /> : <Stack.Screen name="(auth)" />}
-
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="inverted" />
+      <ClerkProvider tokenCache={tokenCache}>
+        <AuthLayout />
+        <StatusBar style="inverted" />
+      </ClerkProvider>
     </View>
   );
 }

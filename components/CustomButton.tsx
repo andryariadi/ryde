@@ -1,4 +1,5 @@
 import { ButtonProps } from "@/types/type";
+import { Feather } from "@expo/vector-icons";
 import React from "react";
 import { Text, TouchableOpacity } from "react-native";
 
@@ -32,12 +33,12 @@ const getTextVariantStyle = (variant: ButtonProps["textVariant"]) => {
   }
 };
 
-const CustomButton = ({ onPress, title, bgVariant = "primary", textVariant = "default", IconLeft, IconRight, className, ...props }: ButtonProps) => {
+const CustomButton = ({ onPress, title, bgVariant = "primary", textVariant = "default", IconLeft, IconRight, className, isLoading, ...props }: ButtonProps) => {
   return (
     <TouchableOpacity onPress={onPress} {...props} className={`w-full rounded-full flex flex-row justify-center items-center shadow-md shadow-neutral-400/70 px-4 py-5 ${getBgVariantStyle(bgVariant)} ${className}`} {...props}>
       {IconLeft && <IconLeft className="mr-2" />}
 
-      <Text className={`text-lg font-bold ${getTextVariantStyle(textVariant)}`}>{title}</Text>
+      {isLoading ? <Feather name="loader" size={24} color="black" className="animate-spin mx-auto" /> : <Text className={`text-lg font-bold ${getTextVariantStyle(textVariant)}`}>{title}</Text>}
 
       {IconRight && <IconRight className="ml-2" />}
     </TouchableOpacity>
