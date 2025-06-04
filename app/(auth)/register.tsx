@@ -5,16 +5,22 @@ import { icons, images } from "@/constant";
 import { SingupFormValidation } from "@/libs/validations";
 import { useSignUp } from "@clerk/clerk-expo";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import React, { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
-import { Image, ScrollView, Text, View } from "react-native";
+import { Alert, Image, ScrollView, Text, View } from "react-native";
+import Modal from "react-native-modal";
 import { z } from "zod";
 
 const RegisterScreen = () => {
   const { isLoaded, signUp, setActive } = useSignUp();
-  const [pendingVerification, setPendingVerification] = useState<boolean>(false);
-  const [code, setCode] = useState("");
+  const [verification, setVerification] = useState({
+    state: "default",
+    error: "",
+    code: "",
+    email: "",
+  });
+  const router = useRouter();
 
   const {
     handleSubmit,
@@ -32,21 +38,32 @@ const RegisterScreen = () => {
 
     // Start sign-up process using email and password provided
     try {
-      await signUp.create({
-        emailAddress,
-        password,
+      const signUpResult = await signUp.create({
+        emailAddress: data.email,
+        password: data.password,
       });
 
+      setVerification({
+        ...verification,
+        email: signUpResult.emailAddress ?? "",
+      });
+
+      console.log({ signUpResult }, "<---signUpResult");
+
       // Send user an email with verification code
-      await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
+      const emailResult = await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
+
+      console.log({ emailResult }, "<---emailResult");
 
       // Set 'pendingVerification' to true to display second form
       // and capture OTP code
-      setPendingVerification(true);
-    } catch (err) {
-      // See https://clerk.com/docs/custom-flows/error-handling
-      // for more info on error handling
-      console.error(JSON.stringify(err, null, 2));
+      setVerification({
+        ...verification,
+        state: "pending",
+      });
+    } catch (err: any) {
+      console.error(JSON.stringify(err, null, 2), "<---errorHandleSignup");
+      Alert.alert("Error", err.errors[0].longMessage);
     }
   };
 
@@ -56,35 +73,40 @@ const RegisterScreen = () => {
     try {
       // Use the code the user provided to attempt verification
       const signUpAttempt = await signUp.attemptEmailAddressVerification({
-        code,
+        code: verification.code,
       });
+
+      console.log({ signUpAttempt }, "<---signUpAttemptInVerifyPress");
 
       // If verification was completed, set the session to active
       // and redirect the user
       if (signUpAttempt.status === "complete") {
         await setActive({ session: signUpAttempt.createdSessionId });
-        // router.replace("/");
+
+        setVerification({
+          ...verification,
+          state: "success",
+        });
       } else {
         // If the status is not complete, check why. User may need to
         // complete further steps.
+        setVerification({
+          ...verification,
+          error: "Failed to verify email",
+          state: "failed",
+        });
+
         console.error(JSON.stringify(signUpAttempt, null, 2), "<---onVerifyPress");
       }
-    } catch (err) {
-      // See https://clerk.com/docs/custom-flows/error-handling
-      // for more info on error handling
-      console.error(JSON.stringify(err, null, 2));
+    } catch (err: any) {
+      console.error(JSON.stringify(err, null, 2), "<---errorOnVerifyPress");
+      setVerification({
+        ...verification,
+        error: err.errors[0].logMessage,
+        state: "failed",
+      });
     }
   };
-
-  if (pendingVerification) {
-    return (
-      <View className="flex-1 justify-center p-5">
-        <Text className="text-2xl font-bold mb-4">Verify Email</Text>
-        <InputField label="Verification Code" placeholder="Enter verification code" control={control} name="verificationCode" value={code} onChangeText={setCode} />
-        <CustomButton title="Verify Email" onPress={onVerifyPress} isLoading={isSubmitting} />
-      </View>
-    );
-  }
 
   return (
     <ScrollView className="bg-amber-500 flex-1">
@@ -113,6 +135,49 @@ const RegisterScreen = () => {
             Already have an account? <Text className="text-primary-500">Log In</Text>
           </Link>
         </View>
+
+        {/* Modal Verify Email */}
+        <Modal isVisible={verification.state === "pending"} onModalHide={() => setVerification({ ...verification, state: "success" })}>
+          <View className="bg-white gap-5 px-7 py-9 rounded-2xl min-h-[300px]">
+            {/* Title */}
+            <View className="gap-2">
+              <Text className="text-2xl font-JakartaExtraBold text-center">Verification</Text>
+              <Text className="text-gray-400 font-Jakarta text-center">We have sent a verification code to {verification.email}.</Text>
+            </View>
+
+            {/* Input Code */}
+            <InputField
+              label="Code"
+              placeholder="Enter verification code"
+              iconLeft={icons.lock}
+              keyboardType="numeric"
+              control={control}
+              name="verificationCode"
+              value={verification.code}
+              onChangeText={(code) => setVerification({ ...verification, code })}
+            />
+
+            {/* Error Message */}
+            {verification.error && <Text className="text-red-500 text-sm mt-1">{verification.error}</Text>}
+
+            {/* Button Verify */}
+            <CustomButton title="Verify Email" onPress={onVerifyPress} isLoading={isSubmitting} className="bg-success-500" />
+          </View>
+        </Modal>
+
+        {/* Modal Notify Verified */}
+        <Modal isVisible={verification.state === "success"}>
+          <View className="bg-white gap-5 px-7 py-9 rounded-2xl min-h-[300px]">
+            {/* Image Check */}
+            <Image source={images.check} className="w-[110px] h-[110px] mx-auto my-5" />
+
+            <Text className="text-3xl font-JakartaBold text-center">Verified</Text>
+
+            <Text className="text-base text-gray-400 font-Jakarta text-center">You have successfully verified your account.</Text>
+
+            <CustomButton title="Browse Home" onPress={() => router.replace("/(root)/(tabs)/home")} />
+          </View>
+        </Modal>
       </View>
     </ScrollView>
   );
