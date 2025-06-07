@@ -4,14 +4,21 @@ import { tokenCache } from "@clerk/clerk-expo/token-cache";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { View } from "react-native";
+import { ActivityIndicator, View } from "react-native";
 import "react-native-reanimated";
 
 function AuthLayout() {
-  const { isSignedIn } = useAuth();
+  const { isLoaded, isSignedIn } = useAuth();
 
   console.log({ isSignedIn }, "<---authLayout");
 
+  if (!isLoaded || isSignedIn === undefined) {
+    return (
+      <View className="flex-1 justify-center items-center bg-white">
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
   return (
     <Stack screenOptions={{ headerShown: false }}>
       {isSignedIn ? <Stack.Screen name="(root)" /> : <Stack.Screen name="(auth)" />}

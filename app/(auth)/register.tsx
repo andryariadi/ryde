@@ -43,10 +43,10 @@ const RegisterScreen = () => {
         password: data.password,
       });
 
-      setVerification({
-        ...verification,
+      setVerification((prev) => ({
+        ...prev,
         email: signUpResult.emailAddress ?? "",
-      });
+      }));
 
       console.log({ signUpResult }, "<---signUpResult");
 
@@ -57,10 +57,10 @@ const RegisterScreen = () => {
 
       // Set 'pendingVerification' to true to display second form
       // and capture OTP code
-      setVerification({
-        ...verification,
+      setVerification((prev) => ({
+        ...prev,
         state: "pending",
-      });
+      }));
     } catch (err: any) {
       console.error(JSON.stringify(err, null, 2), "<---errorHandleSignup");
       Alert.alert("Error", err.errors[0].longMessage);
@@ -83,30 +83,32 @@ const RegisterScreen = () => {
       if (signUpAttempt.status === "complete") {
         await setActive({ session: signUpAttempt.createdSessionId });
 
-        setVerification({
-          ...verification,
+        setVerification((prev) => ({
+          ...prev,
           state: "success",
-        });
+        }));
       } else {
         // If the status is not complete, check why. User may need to
         // complete further steps.
-        setVerification({
-          ...verification,
+        setVerification((prev) => ({
+          ...prev,
           error: "Failed to verify email",
           state: "failed",
-        });
+        }));
 
         console.error(JSON.stringify(signUpAttempt, null, 2), "<---onVerifyPress");
       }
     } catch (err: any) {
       console.error(JSON.stringify(err, null, 2), "<---errorOnVerifyPress");
-      setVerification({
-        ...verification,
+      setVerification((prev) => ({
+        ...prev,
         error: err.errors[0].logMessage,
         state: "failed",
-      });
+      }));
     }
   };
+
+  console.log({ verification }, "<---verification");
 
   return (
     <ScrollView className="bg-amber-500 flex-1">
