@@ -48,7 +48,7 @@ const RegisterScreen = () => {
         email: signUpResult.emailAddress ?? "",
       }));
 
-      console.log({ signUpResult }, "<---signUpResult");
+      // console.log({ signUpResult }, "<---signUpResult");
 
       // Send user an email with verification code
       const emailResult = await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
@@ -76,7 +76,7 @@ const RegisterScreen = () => {
         code: verification.code,
       });
 
-      console.log({ signUpAttempt }, "<---signUpAttemptInVerifyPress");
+      // console.log({ signUpAttempt }, "<---signUpAttemptInVerifyPress");
 
       // If verification was completed, set the session to active
       // and redirect the user

@@ -38,7 +38,7 @@ const LoginScreen = () => {
         password: data.password,
       });
 
-      console.log({ signInAttempt }, "<---signInAttempt");
+      // console.log({ signInAttempt }, "<---signInAttempt");
 
       // If sign-in process is complete, set the created session as active
       // and redirect the user
