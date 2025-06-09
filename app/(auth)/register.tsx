@@ -2,6 +2,7 @@ import CustomButton from "@/components/CustomButton";
 import InputField from "@/components/InputField";
 import OAuth from "@/components/OAuth";
 import { icons, images } from "@/constant";
+import { fetchAPI } from "@/libs/fetch";
 import { SingupFormValidation } from "@/libs/validations";
 import { useSignUp } from "@clerk/clerk-expo";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,8 +18,10 @@ const RegisterScreen = () => {
   const [verification, setVerification] = useState({
     state: "default",
     error: "",
+    loading: false,
     code: "",
     email: "",
+    name: "",
   });
   const router = useRouter();
 
@@ -46,6 +49,7 @@ const RegisterScreen = () => {
       setVerification((prev) => ({
         ...prev,
         email: signUpResult.emailAddress ?? "",
+        name: data.username,
       }));
 
       // console.log({ signUpResult }, "<---signUpResult");
@@ -70,22 +74,39 @@ const RegisterScreen = () => {
   const onVerifyPress = async () => {
     if (!isLoaded) return;
 
+    setVerification((prev) => ({
+      ...prev,
+      loading: true,
+    }));
+
     try {
       // Use the code the user provided to attempt verification
       const signUpAttempt = await signUp.attemptEmailAddressVerification({
         code: verification.code,
       });
 
-      // console.log({ signUpAttempt }, "<---signUpAttemptInVerifyPress");
+      console.log({ signUpAttempt }, "<---signUpAttemptInVerifyPress");
 
       // If verification was completed, set the session to active
       // and redirect the user
       if (signUpAttempt.status === "complete") {
+        const res = await fetchAPI(`/(api)/user`, {
+          method: "POST",
+          body: JSON.stringify({
+            name: verification.name,
+            email: verification.email,
+            clerkId: signUpAttempt.createdUserId,
+          }),
+        });
+
+        console.log({ res }, "<---resPostUser");
+
         await setActive({ session: signUpAttempt.createdSessionId });
 
         setVerification((prev) => ({
           ...prev,
           state: "success",
+          loading: false,
         }));
       } else {
         // If the status is not complete, check why. User may need to
@@ -94,6 +115,7 @@ const RegisterScreen = () => {
           ...prev,
           error: "Failed to verify email",
           state: "failed",
+          loading: false,
         }));
 
         console.error(JSON.stringify(signUpAttempt, null, 2), "<---onVerifyPress");
@@ -104,6 +126,7 @@ const RegisterScreen = () => {
         ...prev,
         error: err.errors[0].logMessage,
         state: "failed",
+        loading: false,
       }));
     }
   };
@@ -163,7 +186,7 @@ const RegisterScreen = () => {
             {verification.error && <Text className="text-red-500 text-sm mt-1">{verification.error}</Text>}
 
             {/* Button Verify */}
-            <CustomButton title="Verify Email" onPress={onVerifyPress} isLoading={isSubmitting} className="bg-success-500" />
+            <CustomButton title="Verify Email" onPress={onVerifyPress} isLoading={verification.loading} className="bg-success-500" />
           </View>
         </Modal>
 
